@@ -54,13 +54,26 @@ interface SetupOptions {
  * @returns Extracted text
  */
 function extract(el: HTMLElement): string {
-  el.setAttribute("data-md-copying", "")
-  const copy = el.closest("[data-copy]")
-  const text = copy
-    ? copy.getAttribute("data-copy")!
-    : el.innerText
-  el.removeAttribute("data-md-copying")
-  return text.trimEnd()
+  let clone = el.cloneNode(true);
+  el.after(clone);
+
+  clone.childNodes.forEach((child) => {
+    if(child instanceof Element && !isUserSelectable(child)){
+      clone.removeChild(child);
+    }
+  });
+  const text = (clone as HTMLElement).innerText;
+  el.parentNode?.removeChild(clone);
+  return text.trimEnd();
+}
+
+function isUserSelectable(el: Element) {
+  const elementStyle = window.getComputedStyle(el);
+  const userSelectIsNone = (elementStyle.getPropertyValue('user-select') == 'none' ||
+    elementStyle.getPropertyValue('-webkit-user-select') == 'none' ||
+    elementStyle.getPropertyValue('-moz-user-select') == 'none' ||
+    elementStyle.getPropertyValue('-ms-user-select') == 'none');
+  return !userSelectIsNone;
 }
 
 /* ----------------------------------------------------------------------------
@@ -94,6 +107,6 @@ export function setupClipboardJS(
         }),
         map(() => translation("clipboard.copied"))
       )
-        .subscribe(alert$)
+      .subscribe(alert$)
   }
 }
