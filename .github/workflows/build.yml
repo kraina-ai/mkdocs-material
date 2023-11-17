@@ -63,7 +63,9 @@ jobs:
         run: |
           npm run build
           git diff --name-only
-          if [[ `git status --porcelain` ]]; then
+          if [ -z "$(git status --porcelain)" ]; then 
+            echo "No changes, skipping push"
+          else 
             echo "Changes detected, pushing ${git_hash} to master"
             git_hash=$(git rev-parse --short "$GITHUB_SHA")
             git config user.name github-actions
@@ -71,7 +73,4 @@ jobs:
             git add .
             git commit -m "build-${git_hash}"
             git push
-          else
-            echo "No changes, skipping push"
           fi
-          
